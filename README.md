@@ -12,28 +12,54 @@ Depois da leitura, cada transação recebe uma categoria com base nas palavras e
 
 Os dados são armazenados no PostgreSQL, utilizando a biblioteca `psycopg2` para realizar a comunicação entre o Python e o banco de dados.
 
-O sistema também verifica se uma movimentação já existe antes de inseri-la, evitando que a importação do mesmo extrato adicione novamente os registros que correspondem à mesma data, valor e descrição.
+O sistema também verifica se uma movimentação já existe antes de inseri-la, evitando que a importação do mesmo extrato adicione novamente registros com a mesma data, valor e descrição.
 
 ## Funcionalidades
 
-O programa possui um menu interativo no terminal com as seguintes opções:
-
 - **Importar extrato OFX:** lê o arquivo e salva as novas movimentações no banco de dados.
 - **Listar movimentações:** exibe os registros cadastrados, incluindo data, descrição, valor e categoria.
-- **Consultar por categoria:** permite selecionar uma categoria e visualizar as movimentações correspondentes.
-- **Ver resumo financeiro:** calcula o total de entradas, o total de saídas, o saldo calculado e a quantidade de movimentações.
+- **Consultar por categoria:** permite visualizar as movimentações de uma categoria específica.
+- **Ver resumo financeiro:** apresenta o total de entradas, o total de saídas, o saldo calculado e a quantidade de movimentações.
 - **Pesquisar por descrição:** procura transações utilizando uma palavra ou trecho da descrição.
-- **Navegar pelo sistema:** depois de cada operação, permite fazer uma nova consulta, voltar ao menu inicial ou encerrar o programa.
+- **Sair:** encerra a execução do programa.
 
-Durante a importação, o sistema também identifica movimentações antigas que ainda estão sem categoria e tenta classificá-las automaticamente.
+## Navegação do sistema
+
+Ao executar o arquivo `mainVs2.py`, o sistema apresenta o seguinte menu interativo no terminal:
+
+```text
+========================================
+       SISTEMA DE EXTRATOS OFX
+========================================
+1. Importar extrato OFX
+2. Listar movimentações
+3. Consultar por categoria
+4. Ver resumo financeiro
+5. Pesquisar por descrição
+6. Sair
+========================================
+```
+
+### Como funciona a navegação
+
+O usuário navega pelo sistema digitando o número correspondente à opção desejada e pressionando `Enter`.
+
+1. **Importar extrato OFX:** realiza a leitura do arquivo OFX e importa as movimentações para o banco de dados.
+2. **Listar movimentações:** apresenta as transações financeiras já cadastradas.
+3. **Consultar por categoria:** permite consultar as transações de acordo com a categoria.
+4. **Ver resumo financeiro:** apresenta os totais financeiros calculados a partir das movimentações registradas.
+5. **Pesquisar por descrição:** localiza transações por meio de palavras ou trechos presentes na descrição.
+6. **Sair:** encerra o programa.
+
+Após realizar uma operação, o usuário pode continuar utilizando o menu para executar outras funcionalidades, sem precisar iniciar o programa novamente.
 
 ## Tecnologias utilizadas
 
-- Python
-- PostgreSQL
-- Psycopg2
-- Ofxparse
-- DBeaver
+- **Python:** linguagem utilizada para desenvolver a aplicação.
+- **PostgreSQL:** banco de dados utilizado para armazenar as movimentações financeiras.
+- **Psycopg2:** biblioteca responsável pela comunicação entre Python e PostgreSQL.
+- **Ofxparse:** biblioteca utilizada para interpretar os arquivos OFX.
+- **DBeaver:** ferramenta utilizada para visualizar e consultar os dados do banco.
 
 ## Estrutura do banco de dados
 
@@ -96,11 +122,13 @@ Confira os dados de conexão no arquivo `mainVs2.py` e ajuste o usuário, a senh
 
 ### 3. Adicionar o extrato
 
-Coloque o arquivo OFX na mesma pasta do `mainVs2.py`, com o nome:
+Coloque o arquivo OFX na mesma pasta do arquivo `mainVs2.py`, com o nome:
 
 ```text
 extrato.ofx
 ```
+
+Verifique se o nome do arquivo corresponde ao caminho definido no código.
 
 ### 4. Iniciar o programa
 
@@ -110,15 +138,16 @@ Com o ambiente virtual ativado, execute:
 python mainVs2.py
 ```
 
-O menu será exibido no terminal. Basta digitar o número da opção desejada e seguir as instruções apresentadas.
+O menu será exibido no terminal. Digite o número da opção desejada e pressione `Enter` para executar a funcionalidade.
 
 ## Observações
 
-- A classificação é feita por palavras-chave definidas no código. Descrições diferentes das previstas podem ser classificadas como outras entradas ou outras saídas.
+- A classificação das movimentações é feita por palavras-chave definidas no código. Descrições diferentes das previstas podem não receber a categoria esperada.
 - A verificação de duplicatas considera data, valor e descrição. Duas transações legítimas com esses mesmos dados podem ser interpretadas como duplicadas.
 - O resumo financeiro considera valores positivos como entradas e valores negativos como saídas.
-- As credenciais do PostgreSQL e os extratos bancários devem ser protegidos e não devem ser publicados em um repositório público.
+- As credenciais do PostgreSQL devem ser protegidas e não devem ser publicadas em um repositório público.
+- Extratos bancários podem conter informações financeiras pessoais. Utilize arquivos de teste ou anonimizados ao compartilhar o projeto publicamente.
 
 ## Autor
 
-Isadora Cabral dos Santos - RA 25001227
+**Isadora Cabral dos Santos** — RA 25001227
