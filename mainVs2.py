@@ -1,4 +1,3 @@
-
 from ofxparse import OfxParser
 import psycopg2
 
@@ -83,7 +82,7 @@ def importar_extrato():
             cursor.execute(
                 """
                 INSERT INTO movimentacoes
-                (data_movimentacao, valor, descricao, categoria)
+                    (data_movimentacao, valor, descricao, categoria)
                 SELECT %s, %s, %s, %s
                 WHERE NOT EXISTS (
                     SELECT 1
@@ -108,11 +107,13 @@ def importar_extrato():
                 novas += 1
 
         # Classifica movimentações antigas sem categoria
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, descricao, valor
             FROM movimentacoes
             WHERE categoria IS NULL
-        """)
+            """
+        )
 
         antigas = cursor.fetchall()
 
@@ -136,7 +137,10 @@ def importar_extrato():
         print("Importação concluída!")
         print("Transações encontradas:", len(transacoes))
         print("Novas movimentações salvas:", novas)
-        print("Movimentações antigas classificadas:", len(antigas))
+        print(
+            "Movimentações antigas classificadas:",
+            len(antigas)
+        )
 
     except FileNotFoundError:
         print("\nArquivo extrato.ofx não encontrado!")
@@ -145,11 +149,13 @@ def importar_extrato():
     except Exception as erro:
         if conexao:
             conexao.rollback()
+
         print("\nErro ao importar:", erro)
 
     finally:
         if cursor:
             cursor.close()
+
         if conexao:
             conexao.close()
 
@@ -163,12 +169,14 @@ def listar_movimentacoes():
         conexao = conectar_banco()
         cursor = conexao.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, data_movimentacao, descricao,
                    valor, categoria
             FROM movimentacoes
             ORDER BY data_movimentacao DESC, id DESC
-        """)
+            """
+        )
 
         registros = cursor.fetchall()
 
@@ -194,6 +202,7 @@ def listar_movimentacoes():
     finally:
         if cursor:
             cursor.close()
+
         if conexao:
             conexao.close()
 
@@ -207,12 +216,14 @@ def consultar_categoria():
         conexao = conectar_banco()
         cursor = conexao.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DISTINCT categoria
             FROM movimentacoes
             WHERE categoria IS NOT NULL
             ORDER BY categoria
-        """)
+            """
+        )
 
         categorias = [linha[0] for linha in cursor.fetchall()]
 
@@ -237,16 +248,21 @@ def consultar_categoria():
 
         categoria_escolhida = categorias[escolha - 1]
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT data_movimentacao, descricao, valor
             FROM movimentacoes
             WHERE categoria = %s
             ORDER BY data_movimentacao DESC
-        """, (categoria_escolhida,))
+            """,
+            (categoria_escolhida,)
+        )
 
         registros = cursor.fetchall()
 
-        print(f"\n========== {categoria_escolhida.upper()} ==========\n")
+        print(
+            f"\n========== {categoria_escolhida.upper()} ==========\n"
+        )
 
         for data, descricao, valor in registros:
             print(
@@ -262,6 +278,7 @@ def consultar_categoria():
     finally:
         if cursor:
             cursor.close()
+
         if conexao:
             conexao.close()
 
@@ -275,15 +292,21 @@ def resumo_financeiro():
         conexao = conectar_banco()
         cursor = conexao.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
-                COALESCE(SUM(CASE WHEN valor > 0
-                    THEN valor ELSE 0 END), 0),
-                COALESCE(SUM(CASE WHEN valor < 0
-                    THEN ABS(valor) ELSE 0 END), 0),
+                COALESCE(
+                    SUM(CASE WHEN valor > 0
+                        THEN valor ELSE 0 END), 0
+                ),
+                COALESCE(
+                    SUM(CASE WHEN valor < 0
+                        THEN ABS(valor) ELSE 0 END), 0
+                ),
                 COUNT(*)
             FROM movimentacoes
-        """)
+            """
+        )
 
         entradas, saidas, quantidade = cursor.fetchone()
         saldo = entradas - saidas
@@ -301,6 +324,7 @@ def resumo_financeiro():
     finally:
         if cursor:
             cursor.close()
+
         if conexao:
             conexao.close()
 
@@ -322,12 +346,15 @@ def pesquisar_movimentacoes():
         conexao = conectar_banco()
         cursor = conexao.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT data_movimentacao, descricao, valor, categoria
             FROM movimentacoes
             WHERE descricao ILIKE %s
             ORDER BY data_movimentacao DESC
-        """, (f"%{termo}%",))
+            """,
+            (f"%{termo}%",)
+        )
 
         registros = cursor.fetchall()
 
@@ -351,6 +378,127 @@ def pesquisar_movimentacoes():
     finally:
         if cursor:
             cursor.close()
+
+        if conexao:
+            conexao.close()
+
+
+# Permite ao usuário alterar a classificação de uma movimentação
+def alterar_classificacao():
+    conexao = None
+    cursor = None
+
+    categorias = [
+        "Alimentação",
+        "Moradia",
+        "Transporte",
+        "Saúde",
+        "Assinaturas",
+        "Salário",
+        "Transferência",
+        "Outras entradas",
+        "Outras saídas"
+    ]
+
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+
+        cursor.execute(
+            """
+            SELECT id, data_movimentacao, descricao,
+                   valor, categoria
+            FROM movimentacoes
+            ORDER BY data_movimentacao DESC, id DESC
+            """
+        )
+
+        registros = cursor.fetchall()
+
+        print("\n========== ALTERAR CLASSIFICAÇÃO ==========\n")
+
+        if not registros:
+            print("Nenhuma movimentação encontrada.")
+            return
+
+        # Mostra as movimentações para o usuário escolher
+        for id_mov, data, descricao, valor, categoria in registros:
+            print("-" * 45)
+            print("ID:", id_mov)
+            print("Data:", data.strftime("%d/%m/%Y"))
+            print("Descrição:", descricao)
+            print(f"Valor: R$ {valor:.2f}")
+            print("Categoria atual:", categoria or "Sem categoria")
+
+        try:
+            id_escolhido = int(
+                input("\nDigite o ID da movimentação que deseja alterar: ")
+            )
+        except ValueError:
+            print("Digite um ID numérico válido.")
+            return
+
+        # Verifica se a movimentação existe
+        cursor.execute(
+            """
+            SELECT id, categoria
+            FROM movimentacoes
+            WHERE id = %s
+            """,
+            (id_escolhido,)
+        )
+
+        movimentacao = cursor.fetchone()
+
+        if movimentacao is None:
+            print("Movimentação não encontrada.")
+            return
+
+        print("\nCategoria atual:", movimentacao[1] or "Sem categoria")
+        print("\nEscolha a nova classificação:")
+
+        for i, categoria in enumerate(categorias, start=1):
+            print(f"{i}. {categoria}")
+
+        try:
+            escolha = int(
+                input("\nDigite o número da nova categoria: ")
+            )
+        except ValueError:
+            print("Digite um número válido.")
+            return
+
+        if escolha < 1 or escolha > len(categorias):
+            print("Opção inválida.")
+            return
+
+        nova_categoria = categorias[escolha - 1]
+
+        # Salva a nova classificação no banco
+        cursor.execute(
+            """
+            UPDATE movimentacoes
+            SET categoria = %s
+            WHERE id = %s
+            """,
+            (nova_categoria, id_escolhido)
+        )
+
+        conexao.commit()
+
+        print("\nClassificação alterada com sucesso!")
+        print("Nova categoria:", nova_categoria)
+
+    except Exception as erro:
+        if conexao:
+            conexao.rollback()
+
+        print("\nErro ao alterar classificação:", erro)
+
+    finally:
+        if cursor:
+            cursor.close()
+
         if conexao:
             conexao.close()
 
@@ -367,10 +515,13 @@ def navegar_apos_resultado():
 
         if opcao == "1":
             return "consulta"
+
         elif opcao == "2":
             return "inicio"
+
         elif opcao == "0":
             return "sair"
+
         else:
             print("Opção inválida. Tente novamente.")
 
@@ -386,6 +537,7 @@ def menu():
         print("3. Consultar por categoria")
         print("4. Ver resumo financeiro")
         print("5. Pesquisar por descrição")
+        print("6. Alterar classificação")
         print("0. Sair")
         print("=" * 42)
 
@@ -395,23 +547,30 @@ def menu():
             print("\nSistema encerrado. Até mais!")
             break
 
-        elif opcao in ["1", "2", "3", "4", "5"]:
+        elif opcao in ["1", "2", "3", "4", "5", "6"]:
             while True:
                 if opcao == "1":
                     importar_extrato()
+
                 elif opcao == "2":
                     listar_movimentacoes()
+
                 elif opcao == "3":
                     consultar_categoria()
+
                 elif opcao == "4":
                     resumo_financeiro()
+
                 elif opcao == "5":
                     pesquisar_movimentacoes()
+
+                elif opcao == "6":
+                    alterar_classificacao()
 
                 navegacao = navegar_apos_resultado()
 
                 if navegacao == "consulta":
-                    # Repete a mesma operação, solicitando novos dados quando necessário
+                    # Repete a mesma operação
                     continue
 
                 elif navegacao == "inicio":
