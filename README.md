@@ -1,18 +1,20 @@
 # ProjetoOFX
 
-O ProjetoOFX é um sistema desenvolvido em Python para importar extratos bancários no formato OFX, salvar as movimentações em um banco de dados PostgreSQL e facilitar a consulta dessas informações diretamente pelo terminal.
+O ProjetoOFX é um sistema desenvolvido em Python para importar extratos bancários no formato OFX, armazenar as movimentações em um banco de dados PostgreSQL e facilitar a consulta dessas informações diretamente pelo terminal.
 
-A ideia do projeto é automatizar o processo de leitura do extrato e organizar as transações financeiras para que seja possível consultar entradas, saídas e categorias sem precisar analisar o arquivo manualmente.
+O projeto automatiza a leitura dos extratos e organiza as transações financeiras, permitindo consultar entradas, saídas e categorias. Além disso, o usuário pode alterar manualmente a classificação de uma movimentação quando a categoria atribuída automaticamente não estiver correta.
 
 ## Como funciona
 
 O sistema lê o arquivo `extrato.ofx` utilizando a biblioteca `ofxparse` e recupera a data, o valor e a descrição de cada movimentação.
 
-Depois da leitura, cada transação recebe uma categoria com base nas palavras encontradas em sua descrição. Por exemplo, uma movimentação cuja descrição contém “SUPERMERCADO” pode ser classificada como Alimentação, enquanto uma que contém “NETFLIX” pode ser classificada como Assinaturas.
+Cada transação recebe inicialmente uma categoria com base nas palavras encontradas em sua descrição. Por exemplo, uma movimentação que contém “SUPERMERCADO” pode ser classificada como Alimentação, enquanto uma que contém “NETFLIX” pode ser classificada como Assinaturas.
 
-Os dados são armazenados no PostgreSQL, utilizando a biblioteca `psycopg2` para realizar a comunicação entre o Python e o banco de dados.
+Os dados são armazenados no PostgreSQL, utilizando a biblioteca `psycopg2` para realizar a comunicação entre Python e banco de dados.
 
-O sistema também verifica se uma movimentação já existe antes de inseri-la, evitando que a importação do mesmo extrato adicione novamente registros com a mesma data, valor e descrição.
+O sistema também verifica se uma movimentação já existe antes de inseri-la, evitando a duplicação de registros com a mesma data, valor e descrição durante a importação.
+
+Caso uma transação receba uma categoria incorreta, o usuário pode acessar a opção de alteração de classificação e escolher manualmente a categoria desejada.
 
 ## Funcionalidades
 
@@ -21,11 +23,12 @@ O sistema também verifica se uma movimentação já existe antes de inseri-la, 
 - **Consultar por categoria:** permite visualizar as movimentações de uma categoria específica.
 - **Ver resumo financeiro:** apresenta o total de entradas, o total de saídas, o saldo calculado e a quantidade de movimentações.
 - **Pesquisar por descrição:** procura transações utilizando uma palavra ou trecho da descrição.
+- **Alterar classificação:** permite selecionar uma movimentação cadastrada e modificar manualmente sua categoria.
 - **Sair:** encerra a execução do programa.
 
 ## Navegação do sistema
 
-Ao executar o arquivo `mainVs2.py`, o sistema apresenta o seguinte menu interativo no terminal:
+Ao executar o arquivo `mainVs2.py`, o sistema apresenta um menu interativo no terminal, com as opções disponíveis:
 
 ```text
 ========================================
@@ -36,7 +39,8 @@ Ao executar o arquivo `mainVs2.py`, o sistema apresenta o seguinte menu interati
 3. Consultar por categoria
 4. Ver resumo financeiro
 5. Pesquisar por descrição
-6. Sair
+6. Alterar classificação
+7. Sair
 ========================================
 ```
 
@@ -47,11 +51,12 @@ O usuário navega pelo sistema digitando o número correspondente à opção des
 1. **Importar extrato OFX:** realiza a leitura do arquivo OFX e importa as movimentações para o banco de dados.
 2. **Listar movimentações:** apresenta as transações financeiras já cadastradas.
 3. **Consultar por categoria:** permite consultar as transações de acordo com a categoria.
-4. **Ver resumo financeiro:** apresenta os totais financeiros calculados a partir das movimentações registradas.
+4. **Ver resumo financeiro:** apresenta os totais calculados a partir das movimentações registradas.
 5. **Pesquisar por descrição:** localiza transações por meio de palavras ou trechos presentes na descrição.
-6. **Sair:** encerra o programa.
+6. **Alterar classificação:** permite escolher uma movimentação pelo seu identificador e selecionar uma nova categoria para ela.
+7. **Sair:** encerra o programa.
 
-Após realizar uma operação, o usuário pode continuar utilizando o menu para executar outras funcionalidades, sem precisar iniciar o programa novamente.
+Após realizar uma operação, o usuário pode continuar utilizando o menu para executar outras funcionalidades sem precisar iniciar o programa novamente.
 
 ## Tecnologias utilizadas
 
@@ -71,7 +76,7 @@ As movimentações são armazenadas na tabela `movimentacoes`, com os seguintes 
 | `data_movimentacao` | Armazena a data da transação |
 | `valor` | Armazena o valor da movimentação |
 | `descricao` | Guarda a descrição encontrada no extrato |
-| `categoria` | Armazena a classificação atribuída pelo sistema |
+| `categoria` | Armazena a classificação atribuída ou definida pelo usuário |
 
 ## Como executar o projeto
 
@@ -142,7 +147,8 @@ O menu será exibido no terminal. Digite o número da opção desejada e pressio
 
 ## Observações
 
-- A classificação das movimentações é feita por palavras-chave definidas no código. Descrições diferentes das previstas podem não receber a categoria esperada.
+- A classificação automática das movimentações é feita por palavras-chave definidas no código. Descrições diferentes das previstas podem não receber a categoria esperada.
+- A classificação de uma movimentação pode ser alterada manualmente pelo usuário.
 - A verificação de duplicatas considera data, valor e descrição. Duas transações legítimas com esses mesmos dados podem ser interpretadas como duplicadas.
 - O resumo financeiro considera valores positivos como entradas e valores negativos como saídas.
 - As credenciais do PostgreSQL devem ser protegidas e não devem ser publicadas em um repositório público.
